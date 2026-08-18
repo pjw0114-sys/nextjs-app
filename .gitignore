@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# mcp (API 키 등 민감정보 포함)
+.mcp.json
+
+# claude code 로컬 개인 설정 (머신별 경로 포함)
+.claude/settings.local.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
