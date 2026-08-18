@@ -1,16 +1,16 @@
 ---
-description: 'GitHub Pull Request를 생성하고 관리합니다'
+description: "GitHub Pull Request를 생성하고 관리합니다"
 allowed-tools:
   [
-    'Bash(gh pr:*)',
-    'Bash(gh api:*)',
-    'Bash(gh repo:*)',
-    'Bash(git push:*)',
-    'Bash(git status:*)',
-    'Bash(git log:*)',
-    'Bash(git diff:*)',
-    'Bash(git branch:*)',
-    'Bash(git fetch:*)',
+    "Bash(gh pr:*)",
+    "Bash(gh api:*)",
+    "Bash(gh repo:*)",
+    "Bash(git push:*)",
+    "Bash(git status:*)",
+    "Bash(git log:*)",
+    "Bash(git diff:*)",
+    "Bash(git branch:*)",
+    "Bash(git fetch:*)",
   ]
 ---
 
