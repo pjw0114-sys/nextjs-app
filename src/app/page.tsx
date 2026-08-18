@@ -1,7 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/session";
 
-export default function Home() {
+// 로그인 세션 쿠키를 확인해야 하므로 정적 프리렌더링 대상에서 제외한다.
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const user = await getCurrentUser();
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex w-full max-w-3xl flex-1 flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
@@ -39,13 +45,39 @@ export default function Home() {
             center.
           </p>
         </div>
+
+        {user ? (
+          <div className="flex flex-col items-start gap-4">
+            <p className="text-lg text-black dark:text-zinc-50">
+              {user.name}님, 환영합니다.
+            </p>
+            <form action="/api/auth/logout" method="post">
+              <button
+                type="submit"
+                className="bg-foreground text-background flex h-12 w-[158px] items-center justify-center rounded-full px-5 text-base font-medium transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+              >
+                로그아웃
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+            <Link
+              className="bg-foreground text-background flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
+              href="/signup"
+            >
+              회원가입
+            </Link>
+            <Link
+              className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 text-center transition-colors hover:border-transparent hover:bg-black/[.04] md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+              href="/login"
+            >
+              로그인
+            </Link>
+          </div>
+        )}
+
         <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <Link
-            className="bg-foreground text-background flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
-            href="/signup"
-          >
-            회원가입
-          </Link>
           <a
             className="bg-foreground text-background flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
             href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
