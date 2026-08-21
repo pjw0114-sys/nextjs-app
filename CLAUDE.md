@@ -56,7 +56,7 @@ npm run typecheck     # tsc --noEmit. 정확한 검사를 위해 dev/build를 �
 
 ## 기획 문서: 모임 이벤트 관리 기능 (미구현)
 
-`docs/PRD.md`(기능 명세 F001~~F017), `docs/ROADMAP.md`(Phase 1~~4 Task 분해), `docs/LeanCavas.md`(린 캔버스)에 모임 생성·참여자 관리·RSVP·카풀·정산·웹 알림 기능이 기획되어 있으나 **아직 코드로 구현되지 않았다** (`src/app`에는 `groups`, `events` 등 관련 라우트가 없고 `profiles`/`sessions` 외의 도메인 테이블도 없다). 이 기능에 착수할 때는 위 세 문서, 특히 `docs/ROADMAP.md`의 Task 순서(Phase 3 착수 시점에 DB 스키마 확정)를 먼저 확인할 것.
+`docs/PRD.md`(기능 명세 F001부터 F017까지), `docs/ROADMAP.md`(Phase 1부터 4까지 Task 분해), `docs/LeanCavas.md`(린 캔버스)에 모임 생성·참여자 관리·RSVP·카풀·정산·웹 알림 기능이 기획되어 있으나 **아직 코드로 구현되지 않았다** (`src/app`에는 `groups`, `events` 등 관련 라우트가 없고 `profiles`/`sessions` 외의 도메인 테이블도 없다). 이 기능에 착수할 때는 위 세 문서, 특히 `docs/ROADMAP.md`의 Task 순서(Phase 3 착수 시점에 DB 스키마 확정)를 먼저 확인할 것.
 
 ## 커스텀 서브에이전트 정의 (`.claude/agents/`)
 
