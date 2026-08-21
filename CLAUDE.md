@@ -47,7 +47,20 @@ npm run typecheck     # tsc --noEmit. 정확한 검사를 위해 dev/build를 �
 - **스타일링**: Tailwind CSS v4 (`@import "tailwindcss"` in `src/app/globals.css`, `@theme inline`으로 CSS 변수 매핑). 별도의 `tailwind.config.*` 파일 없이 CSS 기반 설정을 사용한다.
 - **UI 컴포넌트**: `shadcn/ui`가 설치되어 있다 (`components.json` 참고). **`style: "base-nova"`, 기반 라이브러리는 Radix가 아니라 `@base-ui/react`(Base UI)** — 흔히 알려진 "new-york + Radix UI" 조합이 아니므로 예제/학습 데이터를 그대로 믿지 말 것. 컴포넌트는 `src/components/ui/`에 생성되고(`@/components/ui` alias), `src/lib/utils.ts`의 `cn()`(`clsx` + `tailwind-merge`)으로 클래스를 병합한다. 새 컴포넌트 추가는 `npx shadcn@latest add <name>`. 아이콘은 `lucide-react`, 변형(variant)은 `class-variance-authority`(`cva`) 사용.
   - `src/app/globals.css`의 폰트 변수는 `--font-sans: var(--font-geist-sans)`로 유지해야 한다 — `shadcn init`을 다시 실행하면 이 값이 `var(--font-sans)`(자기 참조)로 덮어써져 Geist 폰트가 깨질 수 있으니 재실행 후 반드시 확인할 것.
-- **인증/회원가입**: `src/app/signup/page.tsx`(클라이언트 컴포넌트, fetch로 `/api/signup` 호출) → `src/app/api/signup/route.ts`(입력 검증 후 `pool.query`로 `profiles` 테이블에 INSERT) → `src/lib/auth.ts`(Node `crypto.scrypt` 기반 비밀번호 해싱/검증, 외부 패키지 미사용). 이메일 UNIQUE 제약 위반(`ER_DUP_ENTRY`)은 409로 별도 응답한다. 별도의 세션/로그인 기능은 아직 없다.
+- **인증**: 이메일/비밀번호와 Google OAuth를 함께 지원하며, 외부 인증 라이브러리(NextAuth 등) 없이 전부 직접 구현되어 있다.
+  - **회원가입**: `src/app/signup/page.tsx`(클라이언트 컴포넌트, fetch로 JSON body 전송) → `src/app/api/signup/route.ts`(입력 검증 후 `pool.query`로 `profiles` INSERT) → `src/lib/auth.ts`(`crypto.scrypt` 기반 해싱/검증). 이메일 UNIQUE 위반(`ER_DUP_ENTRY`)은 409로 응답.
+  - **로그인**: `src/app/login/page.tsx`(서버 컴포넌트, `<form>` POST) → `src/app/api/auth/login/route.ts`. signup과 달리 **form-urlencoded**로 받는다(JSON 아님). 로그인 실패 시 "계정 없음"과 "비밀번호 틀림"을 구분하지 않고 동일한 에러로 응답(계정 존재 여부 추측 방지). 리다이렉트는 303을 사용(307은 메서드를 보존해 `/login`에 POST가 재전송되며 405가 날 수 있음).
+  - **세션**: `src/lib/session.ts`. JWT가 아니라 자체 세션 테이블 방식 — `randomBytes(32)` 토큰을 httpOnly 쿠키(`session`)에 저장하고, DB `sessions` 테이블에는 SHA-256 해시만 저장한다. `getCurrentUser()`는 쿠키 → 해시 → `sessions JOIN profiles`로 조회하며 `expires_at`을 확인한다. 세션을 쓰는 페이지/라우트는 정적 프리렌더에서 제외하기 위해 `export const dynamic = "force-dynamic"`을 붙인다.
+  - **Google OAuth**: `src/lib/google-oauth.ts`(Authorization Code Flow를 라이브러리 없이 직접 구현) + `src/app/api/auth/google/route.ts`(인가 URL로 리다이렉트, CSRF 방지용 state를 `google_oauth_state` httpOnly 쿠키에 저장) + `src/app/api/auth/google/callback/route.ts`(state를 `timingSafeEqual`로 검증 후 토큰 교환 → userinfo 조회) → `src/lib/profiles.ts`의 `findOrCreateProfileFromGoogle`(트랜잭션: ① `google_id` 매칭 시 로그인 ② 동일 이메일의 기존 계정이 있으면 `email_verified`일 때만 `google_id`를 자동 연동 ③ 없으면 신규 가입. 동시 요청으로 인한 UNIQUE 충돌은 `conflict` 상태로 반환). 이 계정 연동 분기 로직이 인증 코드에서 가장 까다로운 부분이다.
+  - **로그아웃**: `src/app/api/auth/logout/route.ts` → `deleteCurrentSession()`(DB의 세션 row 삭제 + 쿠키 삭제).
+
+## 기획 문서: 모임 이벤트 관리 기능 (미구현)
+
+`docs/PRD.md`(기능 명세 F001~~F017), `docs/ROADMAP.md`(Phase 1~~4 Task 분해), `docs/LeanCavas.md`(린 캔버스)에 모임 생성·참여자 관리·RSVP·카풀·정산·웹 알림 기능이 기획되어 있으나 **아직 코드로 구현되지 않았다** (`src/app`에는 `groups`, `events` 등 관련 라우트가 없고 `profiles`/`sessions` 외의 도메인 테이블도 없다). 이 기능에 착수할 때는 위 세 문서, 특히 `docs/ROADMAP.md`의 Task 순서(Phase 3 착수 시점에 DB 스키마 확정)를 먼저 확인할 것.
+
+## 커스텀 서브에이전트 정의 (`.claude/agents/`)
+
+`.claude/agents/dev/*.md`, `.claude/agents/docs/*.md` 등에 `development-planner`, `prd-generator`, `prd-validator`, `code-reviewer`, `nextjs-app-developer` 등 커스텀 에이전트가 정의되어 있지만, 이 환경에서는 Agent 도구의 `subagent_type`으로 인식되지 않는다(`Agent type 'xxx' not found` 에러). 사용하려면 해당 `.md` 파일의 지침 전문을 `general-purpose` 에이전트 프롬프트에 페르소나로 주입해서 실행해야 한다(예: `docs/PRD.md`, `docs/ROADMAP.md`가 이 방식으로 생성됨).
 
 ## 주의: 실제 스택과 다른 참고 문서
 
